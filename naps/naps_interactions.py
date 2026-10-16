@@ -1,84 +1,119 @@
 #!/usr/bin/env python
-import os
-import time
-import logging
+"""``naps-interactions``: assign interactions between tracked animals from an analysis h5."""
+
+from __future__ import annotations
+
 import argparse
+import logging
+import sys
+import time
+from collections.abc import Sequence
+
+from naps.utils.cli import ConfirmFile, add_verbosity_arguments, log_verbosity
 from naps.utils.tracking import TrackingArray
 
 logger = logging.getLogger("NAPS Logger")
 
-def interactionParser ():
-	'''
-	Interaction Parser
 
-	Assign the parameters for interaction assignment
+def build_parser() -> argparse.ArgumentParser:
+    """Build the ``naps-interactions`` argument parser."""
+    interaction_parser = argparse.ArgumentParser(
+        prog="naps-interactions",
+        description="NAPS -- assign interactions between tracked animals",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
-	Parameters
-	----------
-	sys.argv : list
-		Parameters from command line
+    inputs = interaction_parser.add_argument_group("input files")
+    inputs.add_argument(
+        "--h5-file",
+        help="Defines the input h5 file",
+        type=str,
+        action=ConfirmFile,
+        required=True,
+    )
+    inputs.add_argument(
+        "--yaml-model",
+        help="Defines the YAML model file",
+        type=str,
+        action=ConfirmFile,
+        required=True,
+    )
 
-	Raises
-	------
-	IOError
-		If the specified files do not exist
-	'''
+    general = interaction_parser.add_argument_group("general options")
+    general.add_argument(
+        "--frame-start",
+        help="Defines the frame to start interaction assignment",
+        type=int,
+        default=0,
+    )
+    general.add_argument(
+        "--frame-end",
+        help="Defines the frame to end interaction assignment (exclusive; -1 means all frames)",
+        type=int,
+        default=-1,
+    )
+    general.add_argument("--threads", help="Number of threads to use", type=int, default=1)
 
-	def confirmFile ():
-		'''Custom action to confirm file exists'''
-		class customAction(argparse.Action):
-			def __call__(self, parser, args, value, option_string=None):
-				if not os.path.isfile(value):
-					raise IOError('%s not found' % value)
-				setattr(args, self.dest, value)
-		return customAction
+    outputs = interaction_parser.add_argument_group("output options")
+    outputs.add_argument(
+        "--out-file",
+        help="Defines the output tsv file. Defaults to: out.tsv",
+        type=str,
+        default="out.tsv",
+    )
 
-	interaction_parser = argparse.ArgumentParser(formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+    add_verbosity_arguments(interaction_parser)
+    return interaction_parser
 
-	# Input files
-	interaction_parser.add_argument('--h5-file', help = 'Defines the input h5 file', type = str, action = confirmFile(), required = True)
-	interaction_parser.add_argument('--yaml-model', help = 'Defines the YAML model file', type = str, action = confirmFile(), required = True)
 
-	# General options
-	interaction_parser.add_argument('--frame-start', help = 'Defines the frame to start interaction assignment', type = int, default = 0)
-	interaction_parser.add_argument('--frame-end', help = 'Defines the frame to end interaction assignment', type = int, default = -1)
-	interaction_parser.add_argument('--threads', help = 'Number of threads to use', type = int, default = 1)
+def interactionParser(  # noqa: N802 (public camelCase API)
+    argv: Sequence[str] | None = None,
+) -> argparse.Namespace:
+    """Parse the ``naps-interactions`` arguments.
 
-	#interaction_parser.add_argument('--max-velocity', help = 'Defines the maximum velocity allowed in the dataset', type = int)
-	#interaction_parser.add_argument('--remove-tags', help = 'Defines the tags to remove', type = str, nargs = '+', default = [])
-	#interaction_parser.add_argument('--min-bin', help = 'Min interaction distance', type = int, default = 50)
-	#interaction_parser.add_argument('--max-bin', help = 'Max interaction distance', type = int, default = 450)
-	#interaction_parser.add_argument('--frame-buffer', help = 'Frame buffer - i.e. gap between frames allowed', type = int, default = 5)
-	#interaction_parser.add_argument('--min-frames', help = 'Min frames for interaction', type = int, default = 5)
+    Args:
+        argv: Arguments to parse (default: ``sys.argv[1:]``).
 
-	# Output options
-	interaction_parser.add_argument('--out-file', help = 'Defines the output tsv file. Defaults to: out.tsv', type = str, default = 'out.tsv')
+    Raises:
+        FileNotFoundError: If ``--h5-file`` or ``--yaml-model`` does not exist.
+    """
+    return build_parser().parse_args(argv)
 
-	# Return the arguments
-	return interaction_parser.parse_args()
 
-def main():
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run ``naps-interactions``.
 
-	# Assign the interaction args
-	interaction_args = interactionParser()
+    Args:
+        argv: Command-line arguments (default: ``sys.argv[1:]``).
 
-	# Load the tracking array
-	logger.info("Loading the tracking array...")
-	t0 = time.time()
+    Returns:
+        The process exit status (0).
+    """
+    interaction_args = interactionParser(argv)
 
-	# Create the interactions object using a SLEAP file and the yaml model
-	interactions = TrackingArray.fromH5(interaction_args.h5_file, model_yaml = interaction_args.yaml_model, threads = interaction_args.threads)
+    with log_verbosity(interaction_args.verbose, interaction_args.quiet):
+        logger.info("Loading the tracking array...")
+        t0 = time.perf_counter()
 
-	logger.info("Done loading in %s seconds.", time.time() - t0)
+        # Create the tracking array from the analysis h5 and the yaml model
+        interactions = TrackingArray.fromH5(
+            interaction_args.h5_file,
+            model_yaml=interaction_args.yaml_model,
+            threads=interaction_args.threads,
+        )
+        logger.info("Done loading in %.2f seconds.", time.perf_counter() - t0)
 
-	# Assign interactions from the tracking array
-	logger.info("Starting interaction assignment...")
-	t0 = time.time()
+        logger.info("Starting interaction assignment...")
+        t0 = time.perf_counter()
 
-	# Assign the interactions
-	interactions.assign(interaction_args.out_file, frame_start = interaction_args.frame_start, frame_end = interaction_args.frame_end)
+        interactions.assign(
+            interaction_args.out_file,
+            frame_start=interaction_args.frame_start,
+            frame_end=interaction_args.frame_end,
+        )
+        logger.info("Done with assignment in %.2f seconds.", time.perf_counter() - t0)
+    return 0
 
-	logger.info("Done with assignment in %s seconds.", time.time() - t0)
 
 if __name__ == "__main__":
-	main()
+    sys.exit(main())
