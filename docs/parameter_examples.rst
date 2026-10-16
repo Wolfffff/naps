@@ -58,6 +58,6 @@ With a large window size, the algorithm shows high fidelity in identity assignme
                   [-3, -51, -1],
                   [-2, -3, -51]]
 
-Despite a substantial number of missed tag readings, the large window size ensures correct assignments as the correct identifications far outweigh the missed identifications over the large window of frames. However, a rapid identity swap would be missed due to the delayed response of the algorithm. 
+Despite a substantial number of missed tag readings, the large window size ensures correct assignments as the correct identifications far outweigh the missed identifications over the large window of frames. However, a rapid identity swap would be missed due to the delayed response of the algorithm.
 
 These examples illustrate the need to carefully choose the window size based on the specifics of your experimental design and the nature of your data.

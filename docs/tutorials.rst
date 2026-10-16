@@ -28,7 +28,7 @@ For the purpose of this tutorial, we will use the toy data provided in `tests/da
 
 .. note::
 
-    While NAPS will allow you to directly input the results of `sleap-track`, we strongly recommend you also convert this to an analysis h5 using `sleap-convert` if you will be troubleshooting your workflow. Directly reading in the locations from the h5 drastically increases speed.
+    While NAPS will allow you to directly input the results of `sleap-track`, we strongly recommend you also convert this to an analysis h5 using `sleap-convert` if you will be troubleshooting your workflow. NAPS always reads the tracks from the `.slp` file; the `--h5-path` option is deprecated and ignored.
 
 .. _tracking:
 
@@ -44,8 +44,8 @@ The most direct usage of NAPS is through the CLI. After installing NAPS, :ref:`n
 
 .. code-block:: text
 
-    naps-track [-h] --slp-path SLP_PATH [--h5-path H5_PATH] --video-path
-        VIDEO_PATH --tag-node TAG_NODE_NAME --start-frame START_FRAME
+    naps-track [-h] --slp-path SLP_PATH --video-path
+        VIDEO_PATH [--tag-node-name TAG_NODE_NAME] --start-frame START_FRAME
         --end-frame END_FRAME
         [--half-rolling-window-size HALF_ROLLING_WINDOW_SIZE]
         --aruco-marker-set ARUCO_MARKER_SET
@@ -56,7 +56,8 @@ The most direct usage of NAPS is through the CLI. After installing NAPS, :ref:`n
         [--aruco-adaptive-thresh-constant ADAPTIVETHRESHCONSTANT]
         [--aruco-perspective-rm-ignored-margin PERSPECTIVEREMOVEIGNOREDMARGINPERCELL]
         [--aruco-error-correction-rate ERRORCORRECTIONRATE]
-        [--output-path OUTPUT_PATH] [--threads THREADS]
+        [--output-path OUTPUT_PATH]
+        [... opt-in closed-set, idtracker.ai and --report-json options, see the CLI page]
 
 .. important::
 
@@ -64,9 +65,9 @@ The most direct usage of NAPS is through the CLI. After installing NAPS, :ref:`n
 
 .. code-block:: text
 
-    naps-track --slp-path example.slp --video-path example.mp4 --tag-node-name tag --start-frame 0 --end-frame 1200 --aruco-marker-set DICT_5X5_50 --output-path example-naps.slp --aruco-error-correction-rate 0.6 --aruco-adaptive-thresh-constant 7 --aruco-adaptive-thresh-win-size-max 23 --aruco-adaptive-thresh-win-size-step 10 --aruco-adaptive-thresh-win-size-min 3 --half-rolling-window-size 20
+    naps-track --slp-path example.slp --video-path example.mp4 --tag-node-name tag --start-frame 0 --end-frame 1200 --aruco-marker-set DICT_5X5_50 --output-path example-naps.analysis.h5 --aruco-error-correction-rate 0.6 --aruco-adaptive-thresh-constant 7 --aruco-adaptive-thresh-win-size-max 23 --aruco-adaptive-thresh-win-size-step 10 --aruco-adaptive-thresh-win-size-min 3 --half-rolling-window-size 20
 
-The resulting file, `example-naps.slp`, is in the SLEAP Project file format and can be opened directly with SLEAP.
+The resulting file, `example-naps.analysis.h5`, is a SLEAP analysis HDF5 file (the output format follows the file extension: `.h5` writes an analysis file, `.slp` a SLEAP project).
 
 .. _post-tracking:
 
@@ -74,7 +75,7 @@ The resulting file, `example-naps.slp`, is in the SLEAP Project file format and 
 After NAPS
 ----------
 If we want to post process data from NAPS, it's easy to follow directly with SLEAP tutorials. See `sleap.ai/tutorials/tutorial <https://sleap.ai/tutorials/tutorial>`_.
-We can also remove unassigned tracks by opening the SLEAP GUI > Custom Instance Delete > Delete all instances with no track identity. The remaining tracks with have been assigned to ArUco tags and the track names will expose the n
+We can also remove unassigned tracks by opening the SLEAP GUI > Custom Instance Delete > Delete all instances with no track identity. The remaining tracks have been assigned to ArUco tags, and the track names expose the tag number (``ArUcoTag#<id>``).
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Example: Importing HDF5 files into Python
@@ -116,4 +117,3 @@ The resulting HDF5 can be read into Python, as shown in the SLEAP tutorial, as f
     for i, name in enumerate(node_names):
         print(f"{i}: {name}")
     print()
-

@@ -1,4 +1,4 @@
-|Stable version| |Latest version| |Documentation| |github ci| |Coverage| |conda| |Conda Upload| |PyPI Upload| |LICENSE|
+|Stable version| |Latest version| |Documentation| |github ci| |conda| |Conda Upload| |PyPI Upload| |LICENSE|
 
 .. |Stable version| image:: https://img.shields.io/github/v/release/kocherlab/naps?label=stable
    :target: https://github.com/kocherlab/naps/releases/
@@ -17,11 +17,6 @@
    https://github.com/kocherlab/naps/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/kocherlab/naps/actions/workflows/ci.yml
    :alt: Continuous integration status
-
-.. |Coverage| image::
-   https://codecov.io/gh/kocherlab/naps/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/kocherlab/naps
-   :alt: Coverage
 
 .. |conda| image::
    https://anaconda.org/kocherlab/naps-track/badges/version.svg
@@ -64,25 +59,27 @@ NAPS is a tool for researchers with two goals: (1) to quantify animal behavior o
 ========
 Features
 ========
-* Easy, direct installation across platforms
-* Built directly on top of `OpenCV <https://opencv.org/>`_ and `SLEAP <https://sleap.ai/>`_ with a modular, extensible codebase
+* Easy, direct installation across platforms (Python 3.10+)
+* Built directly on top of `OpenCV <https://opencv.org/>`_ and `sleap-io <https://github.com/talmolab/sleap-io>`_ (reading `SLEAP <https://sleap.ai/>`_ files) with a modular, extensible codebase
 * Flexible API that allows drop in of different methods for marker identification
+* Opt-in closed-set identification (per colony or per quadrant) and idtracker.ai continuity evidence
 
 ============
 Getting NAPS
 ============
-------------
-Easy install **(Windows/Linux)**
-------------
-`conda`:
-
-.. caution::
-
-      This is the recommended installation method for Windows and Linux users only. If you are using an Apple Silicon Mac, please see the :ref:`installation` page for instructions on how to install NAPS.
+`pip`:
 
 .. code-block:: bash
 
-    conda create -n naps naps-track -c kocherlab -c sleap -c nvidia -c conda-forge
+    pip install naps-track
+
+`conda`:
+
+.. code-block:: bash
+
+    conda create -n naps -c kocherlab -c conda-forge naps-track
+
+See the :ref:`installation` page for details.
 
 
 ==========
@@ -92,10 +89,10 @@ References
 Manuscript: `https://doi.org/10.1101/2022.12.07.518416 <https://doi.org/10.1101/2022.12.07.518416>`_
 
 If you use NAPS in your research, please cite:
--------
-BibTeX:
--------
-.. code-block::
+
+BibTeX
+------
+.. code-block:: bibtex
 
    @article{wolf2022naps,
       title={NAPS: Integrating pose estimation and tag-based tracking},

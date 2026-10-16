@@ -15,10 +15,11 @@
 import os
 import sys
 
-import docs.utils
-import naps
-
+# Make the in-tree package importable when it has not been pip-installed (the default on Read the
+# Docs is `pip install .[docs]`, which makes this a no-op).
 sys.path.insert(0, os.path.abspath(".."))
+
+import naps
 
 
 # -- Project information -----------------------------------------------------
@@ -74,33 +75,27 @@ master_doc = "index"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "build", "_templates", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "build",
+    "_templates",
+    "Thumbs.db",
+    ".DS_Store",
+    # large data and figure folders next to the notebooks; only the notebooks are documentation
+    "notebooks/naps_data*",
+    "notebooks/example_data",
+    "notebooks/figures",
+    "notebooks/utils",
+    "scripts",
+    # manuscript-figure notebooks that are not part of the documentation toctree
+    "notebooks/SLEAP_metrics.ipynb",
+    "notebooks/naps_manuscript_graphics.ipynb",
+    "notebooks/pipemake_manuscript_figure.ipynb",
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 pygments_dark_style = "monokai"
-
-
-# Autosummary linkcode resolution
-# https://www.sphinx-doc.org/en/master/usage/extensions/linkcode.html
-def linkcode_resolve(domain, info):
-    """Resolve GitHub URLs for linkcode extension."""
-
-    if domain != "py":
-        return None
-
-    if not info["module"]:
-        return None
-
-    try:
-        filename = docs.utils.resolve(info["module"], info["fullname"])
-        if filename is None:
-            return None
-        return f"https://github.com/kocherlab/naps/blob/{release}/{filename}"
-    except Exception as e:
-        print(info)
-        raise e
-
 
 autosummary_generate = True
 
@@ -117,18 +112,16 @@ default_role = "py:obj"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = "furo"
-# Gotta have sphinx-press-theme installed
-html_theme = "press"
+html_theme = "furo"
 html_favicon = "_static/favicon.png"
 
 
 # Customization options.
 # https://pradyunsg.me/furo/customisation/
 html_theme_options = {
-    "external_links": [
-        ("GitHub", "https://github.com/kocherlab/naps"),
-    ],
+    "source_repository": "https://github.com/kocherlab/naps/",
+    "source_branch": "main",
+    "source_directory": "docs/",
 }
 
 myst_number_code_blocks = ["python"]
@@ -195,4 +188,4 @@ napoleon_type_aliases = {}
 napoleon_attr_annotations = True
 
 # https://myst-nb.readthedocs.io/en/latest/use/config-reference.html
-jupyter_execute_notebooks = "off"
+nb_execution_mode = "off"

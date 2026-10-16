@@ -6,73 +6,48 @@ NAPS Installation Instructions
 
 .. attention::
 
-    We recommend testing out NAPS using Google Colaboratory before installing NAPS on your local machine. You can find the Google Colaboratory notebook `here <https://colab.research.google.com/github/kocherlab/naps/blob/main/docs/notebooks/naps_basic_workflow.ipynb>`_.
+    We recommend testing out NAPS using Google Colaboratory before installing NAPS on your local machine. You can find the Google Colaboratory notebook `here <https://colab.research.google.com/github/kocherlab/naps/blob/main/docs/notebooks/naps_basic_workflow.ipynb>`_. Note that this notebook installs a development branch of NAPS (``wolf-dev-fixing-deps``) from GitHub, not the released ``naps-track`` package.
 
+NAPS needs **Python 3.10 or newer**. It reads and writes SLEAP files through `sleap-io <https://github.com/talmolab/sleap-io>`_ and does *not* need the full `SLEAP <https://sleap.ai/>`_ (TensorFlow) installation. You only need SLEAP itself to produce the pose predictions NAPS consumes; install it separately in its own environment.
 
-Similar to SLEAP, NAPS operates on a complex set of dependencies and we recommend installing it in an isolated environment. As with SLEAP, we provide only experimental support for Appl Silicon Macs
-
-
-***********************
-Conda (Linux / Windows)
-***********************
-
-.. caution::
-
-    This method is *only* for Linux and Windows systems. If you are using a Mac with Apple Silicon, please use other methods or consider testing the Google Colaboratory notebook `here <https://colab.research.google.com/github/kocherlab/naps/blob/main/docs/notebooks/naps_basic_workflow.ipynb>`_.
-
-To install NAPS in a clean environment with `SLEAP <https://sleap.ai/>`_, run the following:
-
-.. code-block:: bash
-
-    conda create -n naps naps-track -c kocherlab -c sleap -c nvidia -c conda-forge
-
-.. hint::
-
-    If you haven't installed Conda before, you must install a version of Conda (Anaconda, Miniconda, etc) before running the above snippet. We recommend Miniconda as a lightweight version of Anaconda.
-
-    Miniconda can be installed as follows:
-
-    1. Download the appropriate `Miniconda installer <https://docs.conda.io/en/latest/miniconda.html#latest-miniconda-installer-links>`_.
-    2. Follow the installer instructions.
-
-***********************
-Conda (Apple Silicon)
-***********************
-
-First install SLEAP using the SLEAP installation for Apple Silicon Macs `here <https://sleap.ai/installation.html#apple-silicon-macs>`_.
-
-then install NAPS using the following:
-
-.. code-block:: bash
-
-    conda activate sleap
-    git clone https://github.com/kocherlab/naps.git
-    cd naps
-    conda env update --file environment_apple_silicon.yml
-
-
+We recommend installing NAPS in an isolated environment.
 
 ***
 pip
 ***
 
-NAPS may also be installed using pip:
-
 .. code-block:: bash
 
     pip install naps-track
 
-.. note::
+or, with `uv <https://docs.astral.sh/uv/>`_:
 
-    Requires Python 3.7.
+.. code-block:: bash
 
+    uv venv && source .venv/bin/activate
+    uv pip install naps-track
+
+.. caution::
+
+    Install exactly one OpenCV distribution. NAPS depends on ``opencv-contrib-python-headless``; a second one (for example ``opencv-python``, pulled in by ``sleap-io[opencv]``) overwrites ``cv2`` and breaks ``cv2.aruco``.
+
+*****
+Conda
+*****
+
+.. code-block:: bash
+
+    conda create -n naps -c kocherlab -c conda-forge naps-track
+
+.. hint::
+
+    If you haven't installed Conda before, you must install a version of Conda (Anaconda, Miniconda, Miniforge, etc) before running the above snippet. We recommend Miniforge or Miniconda as lightweight versions of Anaconda.
 
 ******
-GitHub 
+GitHub
 ******
 
-If you are interested in following the development of NAPS, you may want to install the latest development version of NAPS directly from the `GitHub repository <htto://github.com/kocherlab/naps-track>`_.
-
+If you are interested in following the development of NAPS, you may want to install the latest development version of NAPS directly from the `GitHub repository <https://github.com/kocherlab/naps>`_.
 
 To do that, do the following:
 
@@ -86,17 +61,25 @@ To do that, do the following:
 
     While many systems have git preinstalled, you may need to install git. This can be done by following the instructions on `git-scm.com/downloads <https://git-scm.com/downloads>`_.
 
-1. Clone the repository:
+2. Clone the repository:
 
 .. code-block:: bash
 
     git clone https://github.com/kocherlab/naps.git
     cd naps
 
-3. Install NAPS:
+3. Install NAPS with the development tools (tests, ruff, ty, pre-commit, build):
 
 .. code-block:: bash
 
-    conda env create -f environment.yml
+    uv venv && source .venv/bin/activate
+    uv pip install -e ".[dev]"
+    pytest
 
+Or create the same environment with conda: ``conda env create -f environment.yml``.
 
+***********************
+Apple Silicon (macOS)
+***********************
+
+The pip and conda instructions above work natively on Apple Silicon; no special environment file is needed any more. Run SLEAP itself following the `SLEAP instructions for Apple Silicon <https://sleap.ai/installation.html#apple-silicon-macs>`_.
