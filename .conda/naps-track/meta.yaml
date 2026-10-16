@@ -1,34 +1,49 @@
-# Jinja template: Process setup.py to obtain version and metadata
-{% set data = load_setup_py_data() %}
+# conda-build recipe for `naps-track` (noarch: pure Python). Not validated locally (no conda-build
+# on the cluster); first exercised by the workflow in .github/workflows/upload_conda.yml.
+# Runtime requirements mirror [project].dependencies in pyproject.toml, except opencv (conda) vs opencv-contrib-python-headless (pip); keep them in sync.
+# The version is read from naps/__init__.py (the single source of truth).
+# (`from_recipe_dir=True` resolves the path relative to this recipe directory, .conda/naps-track/)
+{% set version = load_file_regex(
+    load_file="../../naps/__init__.py",
+    regex_pattern='__version__ = "(.+)"',
+    from_recipe_dir=True)[1] %}
 
 package:
   name: naps-track
-  version: {{ data.get('version') }}
-
-about:
-  home: {{ data.get('url') }}
-  license: {{ data.get('license') }}
-  summary: {{ data.get('description') }}
-
-build:
-  number: 0
-  entry_points:
-    - naps-track=naps.naps_track:main
+  version: {{ version }}
 
 source:
   path: ../../
 
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  # noarch: python packages get their launchers from entry_points (they must mirror
+  # [project.scripts] in pyproject.toml)
+  entry_points:
+    - naps-track = naps.naps_track:main
+    - naps-plot = naps.naps_plot:main
+    - naps-interactions = naps.naps_interactions:main
+
 requirements:
   host:
+    - python >=3.10
     - pip
-    - python=3.7
-
+    - setuptools >=77
   run:
-    - pip
-    - python=3.7
-    - sleap::sleap=1.3.0
-    - pytest
-    - tqdm
+    - python >=3.10
+    - numpy >=1.26
+    - scipy >=1.11
+    - pandas >=2.0
+    - h5py >=3.8
+    - attrs >=22.2
+    - pyyaml >=6.0
+    # conda-forge's `opencv` build ships cv2.aruco (it includes the contrib modules)
+    - opencv >=4.7
+    - sleap-io >=0.9.2
+    - matplotlib-base >=3.7
+    - shapely >=2.0
 
 test:
   imports:
@@ -36,3 +51,13 @@ test:
     - cv2.aruco
   commands:
     - naps-track --help
+    - naps-plot --help
+    - naps-interactions --help
+
+about:
+  home: https://github.com/kocherlab/naps
+  license: MIT
+  license_file: LICENSE.md
+  summary: NAPS (NAPS is ArUco Plus SLEAP), hybrid pose and fiducial-tag tracking
+  doc_url: https://naps.readthedocs.io/en/latest/
+  dev_url: https://github.com/kocherlab/naps

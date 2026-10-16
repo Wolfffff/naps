@@ -1,18 +1,59 @@
-dist
-*.pyc
-*.egg-info
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+
+# Build artifacts
+build/
+dist/
+wheelhouse/
+
+# Virtual environments
+.venv/
+venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.tox/
+.nox/
+.ipynb_checkpoints/
+
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
 # VSCode files
 .vscode/
 
 # OS generated files
 .DS_Store
+Thumbs.db
 
 # Sphinx documentation
 docs/_build/
+docs/jupyter_execute/
 
 # Other
 models/
 # docs/notebooks/example_data/
 docs/notebooks/figures/
-docs/notebooks/naps_data/
+# downloaded notebook data (videos and SLEAP files, tens of GB): never commit
+docs/notebooks/naps_data*/
+
+# Model weights, run outputs and sidecars written next to outputs
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.identity.npz
+/outputs/
+/results/
+/data/
+/output/
+/runs/
+*.report.json

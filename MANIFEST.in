@@ -1,1 +1,13 @@
-include requirements.txt
+# The sdist ships the package, the metadata files named in pyproject.toml, and the changelog.
+# Test data (~100 MB), docs assets and notebooks are deliberately left out: the sdist must stay
+# small and PyPI rejects very large uploads. Use a git checkout to run the test suite.
+include CHANGELOG.md
+include LICENSE.md
+include naps/py.typed
+prune tests
+prune docs
+prune build
+prune dist
+prune .conda
+prune .github
+global-exclude __pycache__ *.py[cod] *.so .DS_Store

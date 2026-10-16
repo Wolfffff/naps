@@ -1,0 +1,211 @@
+[build-system]
+# setuptools>=77 for PEP 639 (SPDX `license` expression + `license-files`).
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "naps-track"
+dynamic = ["version"]  # single source of truth: naps/__init__.py::__version__
+description = "NAPS (NAPS is ArUco Plus SLEAP): hybrid pose-estimation and fiducial-tag tracking with identity persistence"
+readme = "README.rst"
+license = "MIT"
+license-files = ["LICENSE.md"]
+# sleap-io (a hard dependency) requires Python >= 3.10.
+requires-python = ">=3.10"
+authors = [
+    { name = "Scott Wolf" },
+    { name = "Dee Ruttenberg" },
+    { name = "Daniel Knapp" },
+    { name = "Andrew Webb" },
+    { name = "Ian Traniello" },
+    { name = "Grace McKenzie-Smith" },
+    { name = "Sophie Leheny" },
+    { name = "Joshua Shaevitz" },
+    { name = "Sarah Kocher" },
+]
+keywords = ["tracking", "pose estimation", "ArUco", "SLEAP", "animal behavior", "identity"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Typing :: Typed",
+]
+# Runtime dependencies are exactly what `naps/` imports. NAPS reads and writes SLEAP files
+# through `sleap-io`; the full `sleap` package (TensorFlow) is NOT needed to run NAPS.
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.0",
+    "h5py>=3.8",
+    "attrs>=22.2",
+    "pyyaml>=6.0",
+    # cv2.aruco.ArucoDetector (OpenCV >= 4.7); the contrib wheel is also valid for 4.x < 4.7
+    # where aruco lived in opencv-contrib. Headless: NAPS never opens a window.
+    "opencv-contrib-python-headless>=4.7",
+    "sleap-io>=0.9.2",
+    # naps-plot / naps-interactions (naps.utils.*) import shapely and pyyaml at module level;
+    # matplotlib is imported lazily, only to resolve colour names.
+    "matplotlib>=3.7",
+    "shapely>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.16",
+    "ty>=0.0.85",
+    "pre-commit>=4",
+    "build>=1.2",
+    "twine>=5",
+    "validate-pyproject>=0.24",
+]
+docs = [
+    "sphinx>=7",
+    "furo",
+    "myst-nb>=1.0",
+    "sphinx-copybutton",
+    "sphinx-argparse",
+    "linkify-it-py",
+]
+# There is deliberately no `colab`/`sleap` extra: NAPS never imports `sleap`, and `sleap` pulls in
+# `opencv-python`, which would install a second `cv2` next to opencv-contrib-python-headless and
+# break `cv2.aruco` (verified with a dry-run resolve). Install SLEAP (training and inference) in its
+# own environment, or in Colab before NAPS, as the notebook does.
+
+[project.scripts]
+naps-track = "naps.naps_track:main"
+naps-plot = "naps.naps_plot:main"
+naps-interactions = "naps.naps_interactions:main"
+
+[project.urls]
+Homepage = "https://github.com/kocherlab/naps"
+Documentation = "https://naps.readthedocs.io/en/latest/"
+Source = "https://github.com/kocherlab/naps"
+"Issue tracker" = "https://github.com/kocherlab/naps/issues"
+Changelog = "https://github.com/kocherlab/naps/blob/main/CHANGELOG.md"
+
+# --------------------------------------------------------------------------- setuptools
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["naps", "naps.*"]
+
+[tool.setuptools.package-data]
+naps = ["py.typed"]
+
+[tool.setuptools.dynamic]
+version = { attr = "naps.__version__" }
+
+# ------------------------------------------------------------------------------- ruff
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = ["docs", "build", "dist", "naps_track.egg-info"]
+# apply the excludes above to files that pre-commit passes explicitly, too
+force-exclude = true
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "UP",       # pyupgrade
+    "B",        # bugbear
+    "C4",       # comprehensions
+    "SIM",      # simplify
+    "RET",      # return
+    "PIE",
+    "RUF",
+    "N",        # pep8-naming
+    "PTH",      # pathlib
+    "PL",       # pylint
+    "TRY",      # exception best practice
+    "D",        # docstrings (google convention)
+    "ANN",      # annotations
+    "S",        # bandit (security)
+    "T20",      # no print in library code
+    "ERA",      # commented-out code
+]
+# Deliberate deviations from the provisional config:
+#  - ANN101/ANN102 (self/cls annotations) were removed from ruff, so they are no longer listed.
+#  - W191, D206 (tab indentation) added: ruff documents both as conflicting with the formatter,
+#    which converts tabs itself; selecting them only makes ruff print a warning on every run.
+ignore = ["D203", "D213", "PLR0913", "PLR2004", "TRY003", "W191", "D206"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["naps"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: asserts, no docstring/annotation rules, magic numbers, prints. Public camelCase names in
+# `naps/` (ArUcoModel.withTagSet, ...) cannot be renamed without breaking the API; they carry an
+# explicit `# noqa: N802` / `N803` at the definition rather than a blanket per-file ignore.
+"tests/*" = ["S101", "D", "ANN", "PLR2004", "T20"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ------------------------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+xfail_strict = true
+markers = [
+    "e2e: end-to-end CLI tests that decode the bundled example video (slow)",
+]
+filterwarnings = [
+    "error",
+]
+
+# ----------------------------------------------------------------------------- coverage
+[tool.coverage.run]
+source = ["naps"]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+# Measured branch coverage of the whole package (95.06%, 429 tests), rounded down.
+fail_under = 95
+skip_empty = true
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# ------------------------------------------------------------------------------------ ty
+# Run in an environment that has the project and its dependencies installed:
+#   source <env>/bin/activate && ty check
+# ty finds that environment through VIRTUAL_ENV (or `ty check --python <env>`).
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["naps", "tests"]
+exclude = ["docs", "build", "dist"]
+
+# Tests pass deliberately wrong argument types to check that the library rejects them
+# (e.g. `ArUcoModel.withTagSet(1.5, ...)`), and use plain dict literals for Mapping parameters.
+[[tool.ty.overrides]]
+include = ["tests/**"]
+
+[tool.ty.overrides.rules]
+invalid-argument-type = "ignore"
