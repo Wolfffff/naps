@@ -691,7 +691,7 @@ def _add_joint_arguments(parser: argparse.ArgumentParser) -> None:
         help=(
             "joint engine: bees per colony/quadrant. A region with fewer tags gets untagged-bee "
             "placeholders (3 tags + 1 untagged bee); a region with more tags is unsupported. "
-            f"At most {MAX_TAGS}. Default 4."
+            f"3..{MAX_TAGS}, or 2 for a pair with an explicit two-tag --closed-set. Default 4."
         ),
         type=int,
         default=4,
@@ -891,15 +891,21 @@ def _validate_joint_args(args: argparse.Namespace, quadrant_mode: bool) -> None:
             "--identity-engine joint needs the closed set of tags: pass --closed-set, "
             "--closed-set-map or --closed-set-infer"
         )
-    if not 3 <= args.colony_size <= MAX_TAGS:
-        raise SystemExit(f"--colony-size must be between 3 and {MAX_TAGS}")
+    # A pair (2 tags) is only allowed with an explicit --closed-set of 2 tags: inferred tag sets
+    # keep the 3-tag minimum, so their behaviour is unchanged.
+    pair = bool(args.closed_set) and len(set(args.closed_set)) == 2
+    if not (2 if pair else 3) <= args.colony_size <= MAX_TAGS:
+        raise SystemExit(
+            f"--colony-size must be between 3 and {MAX_TAGS} "
+            "(2 only with an explicit two-tag --closed-set)"
+        )
     if not 0.5 < args.min_confidence <= 1.0:
         raise SystemExit("--min-confidence must be in (0.5, 1]")
     if args.interpolate_max_gap < 0 or args.window_frames < 1:
         raise SystemExit("--interpolate-max-gap must be >= 0 and --window-frames >= 1")
-    if args.closed_set and not 3 <= len(set(args.closed_set)) <= args.colony_size:
+    if args.closed_set and not 2 <= len(set(args.closed_set)) <= args.colony_size:
         raise SystemExit(
-            f"--closed-set needs between 3 and --colony-size ({args.colony_size}) tags for the "
+            f"--closed-set needs between 2 and --colony-size ({args.colony_size}) tags for the "
             "joint engine"
         )
 
@@ -1303,6 +1309,8 @@ def build_joint_config(args: argparse.Namespace) -> JointConfig:
         tracklets=TrackletParams(),
         tracklet_mode=args.tracklets,
         colony_size=args.colony_size,
+        # an explicit two-tag closed set (a pair of animals) lowers the region minimum to 2
+        min_tags=2 if args.closed_set and len(set(args.closed_set)) == 2 else 3,
     )
 
 

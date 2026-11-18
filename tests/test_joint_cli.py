@@ -151,8 +151,9 @@ def test_build_joint_config_maps_the_options():
         (["--closed-set", "5", "6", "7", "--min-confidence", "1.5"], "--min-confidence"),
         (["--closed-set", "5", "6", "7", "--interpolate-max-gap", "-1"], "--interpolate-max-gap"),
         (["--closed-set", "5", "6", "7", "--window-frames", "0"], "--window-frames"),
-        (["--closed-set", "5", "6"], "--closed-set needs between 3 and --colony-size"),
-        (["--closed-set", "5", "6", "7", "8", "9"], "--closed-set needs between 3 and"),
+        (["--closed-set", "5"], "--closed-set needs between 2 and --colony-size"),
+        (["--closed-set", "5", "6", "7", "8", "9"], "--closed-set needs between 2 and"),
+        (["--closed-set-infer", "--colony-size", "2"], "--colony-size must be between 3"),
     ],
 )
 def test_invalid_joint_options_exit_with_a_message(joint_scene, extra, message):
@@ -163,6 +164,20 @@ def test_invalid_joint_options_exit_with_a_message(joint_scene, extra, message):
     assert isinstance(exc.value.code, str)
     assert message in exc.value.code
     assert not out.exists()
+
+
+def test_a_two_tag_closed_set_is_a_pair():
+    parser = naps_track.build_parser()
+    pair = parser.parse_args(
+        [*REQUIRED, "--identity-engine", "joint", "--closed-set", "0", "1", "--colony-size", "2"]
+    )
+    naps_track._validate_joint_args(pair, quadrant_mode=False)
+    config = naps_track.build_joint_config(pair)
+    assert (config.colony_size, config.min_tags) == (2, 2)
+    triple = parser.parse_args(
+        [*REQUIRED, "--identity-engine", "joint", "--closed-set", "5", "6", "7"]
+    )
+    assert naps_track.build_joint_config(triple).min_tags == 3
 
 
 def test_quadrant_scope_wiring_depends_on_the_engine():

@@ -85,6 +85,7 @@ docs = [
 naps-track = "naps.naps_track:main"
 naps-plot = "naps.naps_plot:main"
 naps-interactions = "naps.naps_interactions:main"
+naps-color-decodes = "naps.color_tags:main"
 
 [project.urls]
 Homepage = "https://github.com/kocherlab/naps"

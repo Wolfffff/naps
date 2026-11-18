@@ -136,12 +136,18 @@ def open_capture(path: str, threads: int | None = None) -> cv2.VideoCapture:
 @contextmanager
 def _quiet_opencv() -> Generator[None, None, None]:
     """Silence OpenCV's per-frame "treated as 8UC1" warning while retrieving raw luma."""
-    previous = cv2.utils.logging.getLogLevel()
-    cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+    # The PyPI opencv wheels (the declared dependency) do not expose cv2.utils.logging; only some
+    # conda builds do. Without it the warning is simply not silenced.
+    log = getattr(getattr(cv2, "utils", None), "logging", None)
+    if log is None:
+        yield
+        return
+    previous = log.getLogLevel()
+    log.setLogLevel(log.LOG_LEVEL_ERROR)
     try:
         yield
     finally:
-        cv2.utils.logging.setLogLevel(previous)
+        log.setLogLevel(previous)
 
 
 def _to_gray(image: NDArray[np.generic]) -> Frame:

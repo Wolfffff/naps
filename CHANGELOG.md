@@ -12,6 +12,14 @@ apart from the fixes listed under "Fixed".
 
 ### Added
 
+- **Brightness ("colour") tags** (`naps-color-decodes`, `naps.color_tags`): for paint-dot tags (e.g. one light and one
+  black dot per pair). Measures a percentile of the grey levels in a disc around the tag node of every instance, splits
+  bright from dark with a per-video Otsu threshold (or `--threshold`) and an abstention `--margin`, and writes the votes
+  as a precomputed decodes file for `naps-track --decodes`. Only bright dots vote by default (a hidden light dot also
+  reads dark); `--dark-votes` adds the dark tag.
+- **Pairs in the joint engine**: an explicit two-tag `--closed-set` allows `--colony-size 2` (`JointConfig.min_tags`
+  2). Inferred tag sets keep the 3-tag minimum.
+
 - **Joint identity engine** (`--identity-engine joint`, opt-in; default stays `legacy`): builds tracklets from the
   SLEAP instances itself (`naps.tracklets`; `--tracklets built|sleap`), decodes the tag around every instance and
   infers all tags of a colony/quadrant jointly with an exact forward-backward over the injective assignments
@@ -151,6 +159,8 @@ apart from the fixes listed under "Fixed".
 
 ### Fixed
 
+- The fast decoder crashed with the PyPI OpenCV wheels, which have no `cv2.utils.logging` (only some conda
+  builds do); the log-level silencing is now skipped when it is missing.
 - `naps/__init__.py` no longer overwrites the module's own `__name__` with `"naps-track"`. That made
   `from naps import naps_track` look for a module called `naps-track.naps_track` and fail with
   `ModuleNotFoundError: No module named 'naps-track'` unless the submodule had already been imported.
